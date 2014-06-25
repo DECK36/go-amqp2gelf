@@ -226,7 +226,7 @@ func writeLogsToGelf(deliveries <-chan amqp.Delivery, done chan error) {
 	for d := range deliveries {
 		gm, err := buildGelfMessage(d.Body, d.ContentType)
 		if err != nil {
-			d.Reject(true) // request requeue for dead letter queue
+			d.Reject(false) // do not requeue
 			continue
 		}
 		if *options.verbose {
