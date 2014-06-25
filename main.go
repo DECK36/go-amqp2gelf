@@ -1,5 +1,5 @@
 /*
-amqplogger
+amqp2gelf
 
 A simple tool to read from an AMQP queue and forwards as GELF/UPD packet.
 
@@ -9,7 +9,6 @@ Other messages are put inside the GELF "message" field.
 
 2014, DECK36 GmbH & Co. KG, <martin.schuette@deck36.de>
 */
-
 package main
 
 import (
@@ -236,7 +235,7 @@ func writeLogsToGelf(deliveries <-chan amqp.Delivery, done chan error) {
 		err = gelfWriter.WriteMessage(&gm)
 		if err != nil {
 			done <- fmt.Errorf("Cannot send gelf msg: %v", err)
-			d.Nack(false, true) // don't ack multiple, request requeue for others
+			d.Nack(false, false) // don't ack multiple, do not request requeue
 			continue
 		}
 		d.Ack(false) // don't ack multiple
