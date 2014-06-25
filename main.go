@@ -73,7 +73,7 @@ func amqpConsumer(amqpURI string, amqpQueue string, shutdown chan<- string) (c *
 		return nil, fmt.Errorf("AMQP Channel: %s", err)
 	}
 
-	// here we only ensure the AMQP exchange exists
+	// here we only ensure the AMQP queue exists
 	q, err := c.channel.QueueDeclare(
 		amqpQueue, // name
 		true,      // durable
@@ -235,7 +235,7 @@ func writeLogsToGelf(deliveries <-chan amqp.Delivery, done chan error) {
 		err = gelfWriter.WriteMessage(&gm)
 		if err != nil {
 			done <- fmt.Errorf("Cannot send gelf msg: %v", err)
-			d.Nack(false, false) // don't ack multiple, do not request requeue
+			d.Reject(false) // do not requeue
 			continue
 		}
 		d.Ack(false) // don't ack multiple
