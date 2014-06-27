@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-const thisVersion = "0.2"
+const thisVersion = "0.3"
 const thisProgram = "amqp2gelf"
 
 // all command line options
