@@ -24,6 +24,9 @@ import (
 	"strconv"
 )
 
+const thisVersion = "0.2"
+const thisProgram = "amqp2gelf"
+
 // all command line options
 type CommandLineOptions struct {
 	uri         *string
@@ -56,6 +59,12 @@ type Consumer struct {
 }
 
 func amqpConsumer(amqpURI string, amqpQueue string, shutdown chan<- string) (c *Consumer, err error) {
+	amqpConfig := amqp.Config{
+		Properties: amqp.Table{
+			"product": thisProgram,
+			"version": thisVersion,
+		},
+	}
 	c = &Consumer{
 		conn:    nil,
 		channel: nil,
@@ -64,7 +73,10 @@ func amqpConsumer(amqpURI string, amqpQueue string, shutdown chan<- string) (c *
 	}
 
 	// this is the important part:
-	c.conn, err = amqp.Dial(amqpURI)
+	if *options.verbose {
+		log.Println("connecting to ", amqpURI, "...")
+	}
+	c.conn, err = amqp.DialConfig(amqpURI, amqpConfig)
 	if err != nil {
 		return nil, fmt.Errorf("AMQP Dial: %s", err)
 	}
@@ -254,6 +266,9 @@ func osSignalHandler(shutdown chan<- string) {
 }
 
 func main() {
+	if *options.verbose {
+		log.Printf("Start %s %s", thisProgram, thisVersion)
+	}
 	// let goroutines tell us to shutdown (on error)
 	var shutdown = make(chan string)
 
