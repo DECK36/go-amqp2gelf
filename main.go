@@ -22,6 +22,7 @@ import (
 	"syscall"
 	"encoding/json"
 	"strconv"
+	"time"
 )
 
 const thisVersion = "0.2"
@@ -261,7 +262,13 @@ func osSignalHandler(shutdown chan<- string) {
 	var sigs = make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	sig := <-sigs
+	sig := <-sigs  // this is the blocking part
+
+	go func(){
+		time.Sleep(2*time.Second)
+		log.Fatalf("shutdown was ignored, bailing out now.\n")
+	}()
+
 	shutdown <- fmt.Sprintf("received signal %v", sig)
 }
 
@@ -278,7 +285,8 @@ func main() {
 	// start input
 	c, err := amqpConsumer(*options.uri, *options.queueName, shutdown)
 	if err != nil {
-		shutdown <- err.Error()
+		// cannot use shutdown channel, no listener yet
+		log.Fatalln("Fatal Error: ", err.Error())
 	}
 	go func() {
 		err = <-c.done
