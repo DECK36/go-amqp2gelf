@@ -12,6 +12,7 @@ Other messages are put inside the GELF "message" field.
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"github.com/DECK36/go-gelf/gelf"
@@ -224,6 +225,7 @@ func buildGelfMessage_text(message []byte) (gm gelf.Message, err error) {
 }
 
 func buildGelfMessage(message []byte, ctype string) (gm gelf.Message, err error) {
+	message = bytes.TrimSpace(message)
 	if (ctype == "application/json" || ctype == "text/json") &&
 		message[0] == '{' && message[len(message)-1] == '}' {
 		gm, err = buildGelfMessage_json(message)
