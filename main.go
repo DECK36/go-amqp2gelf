@@ -80,10 +80,14 @@ func amqpConsumer(amqpURI string, amqpQueue string, shutdown chan<- string) (c *
 	c.conn, err = amqp.DialConfig(amqpURI, amqpConfig)
 	if err != nil {
 		return nil, fmt.Errorf("AMQP Dial: %s", err)
+	} else if *options.verbose {
+		log.Println("got connection")
 	}
 	c.channel, err = c.conn.Channel()
 	if err != nil {
 		return nil, fmt.Errorf("AMQP Channel: %s", err)
+	} else if *options.verbose {
+		log.Println("got channel")
 	}
 
 	// here we only ensure the AMQP queue exists
@@ -111,6 +115,8 @@ func amqpConsumer(amqpURI string, amqpQueue string, shutdown chan<- string) (c *
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Queue Consume: %s", err)
+	} else if *options.verbose {
+		log.Println("got consumer")
 	}
 
 	go writeLogsToGelf(deliveries, c.done)
@@ -240,10 +246,13 @@ func writeLogsToGelf(deliveries <-chan amqp.Delivery, done chan error) {
 		gm, err := buildGelfMessage(d.Body, d.ContentType)
 		if err != nil {
 			d.Reject(false) // do not requeue
+			if *options.verbose {
+				log.Printf("Rejected msg: %#v\n", d.Body)
+			}
 			continue
 		}
 		if *options.verbose {
-			log.Printf("Gelf Msg Obj: %#v\n", gm)
+			log.Printf("sent msg: %f %s\n", gm.TimeUnix, gm.Short)
 		}
 		err = gelfWriter.WriteMessage(&gm)
 		if err != nil {
